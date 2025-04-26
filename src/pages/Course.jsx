@@ -45,7 +45,7 @@ export default function Course() {
   const [selectedCourse, setSelectedCourse] = useState(null);  
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
- const handleClosesched = () => setOpen(false);
+
   useEffect(() => {
     const fetchCourses = async () => {
       const token = cookies.AUTH_TOKEN;
@@ -57,18 +57,12 @@ export default function Course() {
           toast.error(response.message ?? 'Failed to fetch courses.');
         }
       } catch (error) {
-        console.error('Failed to fetch courses', error);
         toast.error('Failed to fetch courses.');
       }
     };
 
     const fetchSched_index = async () => {
       const token = cookies.AUTH_TOKEN;
-      if (!token) {
-        toast.error('No authentication token found. Please log in again.');
-        return;
-      }
-
       try {
         const response = await Scheduleindex(token);
         if (response.ok) {
@@ -143,11 +137,6 @@ export default function Course() {
 };
 
 
-const formatTime = (time) => {
-  const [hours, minutes] = time.split(':');
-  return `${hours}:${minutes}:00`;
-};
-
 const handleCreateSubmit = async (e) => {
   e.preventDefault();
   const token = cookies.AUTH_TOKEN;
@@ -163,11 +152,8 @@ const handleCreateSubmit = async (e) => {
       if (response.errors) {
         setErrors(response.errors); 
       }
-      toast.error(response.message ?? "Failed to create course.");
-      console.log(formData); // This should display the current values of formData
     }
   } catch (error) {
-    console.error('Failed to create course', error);
     toast.error('Failed to create course.');
   }
 };
@@ -176,10 +162,6 @@ const handleCreateSubmit = async (e) => {
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
     const token = cookies.AUTH_TOKEN;
-    if (!selectedCourse) {
-      toast.error('No course selected for update.');
-      return;
-    }
     try {
       const response = await update(formData, selectedCourse.id, token);
       if (response.ok) {
@@ -194,7 +176,6 @@ const handleCreateSubmit = async (e) => {
         toast.error(response.message ?? 'Failed to update course.');
       }
     } catch (error) {
-      console.error('Failed to update course', error);
       toast.error('Failed to update course.');
     }
   };
@@ -213,10 +194,6 @@ const handleCreateSubmit = async (e) => {
 
   const handleDelete = async () => {
     const token = cookies.AUTH_TOKEN;
-    if (!selectedCourse) {
-      toast.error('No course selected for deletion.');
-      return;
-    }
     try {
       const response = await Coursesoftdelete(selectedCourse.id, token);
       if (response.ok) {
@@ -228,7 +205,6 @@ const handleCreateSubmit = async (e) => {
         toast.error(response.message ?? 'Failed to delete course.');
       }
     } catch (error) {
-      console.error('Failed to delete course', error);
       toast.error('Failed to delete course.');
     }
     handleMenuClose();
@@ -310,7 +286,7 @@ const handleCreateSubmit = async (e) => {
         />
       </Paper>
       <Box sx={{width: '100%', display: 'flex', flexDirection: 'row-reverse',mt: 2}}>
-          <Button variant="contained" sx={{backgroundColor: '#D9D9D9', color:'black',fontWeight: 'bold',height: '40px'}} onClick={handleOpenCreate}> Create </Button> 
+          <Button variant="contained" sx={{backgroundColor: 'rgb(22,162,43)', color:'white',fontWeight: 'bold',height: '40px'}} onClick={handleOpenCreate}> Create </Button> 
       </Box>
    </Box>
       <Grid container spacing={3} justifyContent="flex-start">
@@ -320,14 +296,14 @@ const handleCreateSubmit = async (e) => {
             (sched) => sched.course_id === course.id && sched.status == 1); const professorName = assignedSchedule?.user?.username || "None";
           return (
               <Grid item xs={12} sm={6} md={3} key={course.id}>
-                <Card sx={{ width: '100%', height: '100%', backgroundColor: 'white', transition: 'transform 0.3s, box-shadow 0.3s', '&:hover': { transform: 'scale(1.05)', boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.2)',},  }}onClick={() => handleCardClick(course)}>
+                <Card sx={{ width: '100%', height: '100%',  background: 'linear-gradient(to bottom,rgb(146, 190, 231), #e8f2fb)', transition: 'transform 0.3s, box-shadow 0.3s', '&:hover': { transform: 'scale(1.05)', boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.2)',},  }}onClick={() => handleCardClick(course)}>
                   <CardActionArea sx={{ height: '100%' }}>
                     <CardContent>
                       <IconButton style={{ float: 'right' }} onClick={(event) => {handleMenuOpen(event, course); }}><MoreVertIcon /> </IconButton>
-                      <Typography sx={{ color: '#718096' }}>Course Code: {course.code}</Typography>
-                      <Typography gutterBottom variant="h5" component="div">{course.name}</Typography>
-                      <Typography variant="body2" sx={{ color: '#4a5568' }}>{course.description}</Typography>
-                      <Typography variant="body2" sx={{ mt: 2, fontWeight: 'bold', color: 'black' }}>Assign Professor: {professorName} </Typography>
+                      <Typography gutterBottom variant="h5" sx={{fontWeight: 'bold', wordBreak: 'break-word' }}component="div">{course.name}</Typography>
+                        <Typography sx={{ color: 'black', wordBreak: 'break-word'  }}>Course Code: {course.code}</Typography>
+                        <Typography variant="body2" sx={{ color: 'black', wordBreak: 'break-word' }}>{course.description}</Typography>
+                        <Typography variant="body2" sx={{ color: 'black', wordBreak: 'break-word' }}>Assign Professor: {professorName} </Typography>
                     </CardContent>
                   </CardActionArea>
                 </Card>
@@ -345,22 +321,24 @@ const handleCreateSubmit = async (e) => {
         <MenuItem onClick={handleConfirmDelete}>Delete</MenuItem>
         <MenuItem onClick={handleSeeDetails}>See Details</MenuItem>
       </Menu>
-      <Modal open={openCreate} onClose={handleCloseCreate} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+      <Modal open={openCreate} onClose={() =>{handleCloseCreate();setErrors({});}} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
           <Box  sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: { xs: "90%", sm: "70%", md: "50%", lg: 450 },  bgcolor: "background.paper", p: { xs: 2, sm: 3, md: 4 },  borderRadius: "12px", boxShadow: 5,}}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <Typography id="modal-modal-title" variant="h6" component="h2">Create Course</Typography>
-              <IconButton onClick={handleCloseCreate}>
+              <IconButton onClick={() =>{handleCloseCreate();setErrors({});}}>
                 <CloseIcon />
               </IconButton>
             </Box>
             
             <form onSubmit={handleCreateSubmit}>
-              <TextField fullWidth margin="normal" label="Name" name="name" value={formData.name} onChange={handleChange} required error={!!errors.name} helperText={errors.name ? errors.name.join(', ') : ''}  />
+              <TextField fullWidth margin="normal" label="Name" name="name" value={formData.name}  onChange={(e) => { const value = e.target.value.replace(/[0-9]/g, ""); setFormData({ ...formData, name: value }); }} helperText={errors.name ? errors.name.join(', ') : ''}  />
               <TextField fullWidth margin="normal" label="Code" name="code" value={formData.code} onChange={handleChange} required  error={!!errors.code} helperText={errors.code ? errors.code.join(', ') : ''} />
+              
               <TextField fullWidth margin="normal" label="Unit" name="credit_unit" value={formData.credit_unit} onChange={handleChange} required  error={!!errors.credit_unit} helperText={errors.credit_unit ? errors.credit_unit.join(', ') : ''}/>
-              <TextField fullWidth margin="normal" label="Description" name="description" value={formData.description} onChange={handleChange} required error={!!errors.description} helperText={errors.description ? errors.description.join(', ') : ''} />
+              
+              <TextField fullWidth margin="normal" label="Description" name="description" value={formData.description} onChange={(e) => { const value = e.target.value.replace(/[0-9]/g, ""); setFormData({ ...formData, description: value }); }} required error={!!errors.description} helperText={errors.description ? errors.description.join(', ') : ''} />
               <Box sx={{ display: "flex", flexDirection: { xs: "row", sm: "row" }, gap: 2, mt: 3 }}>
-                <Button onClick={handleCloseCreate} variant="contained" sx={{ backgroundColor: "red", width: { xs: "100%", sm: "auto" } }}>Close</Button>
+                <Button onClick={() =>{handleCloseCreate();setErrors({});}} variant="contained" sx={{ backgroundColor: "red", width: { xs: "100%", sm: "auto" } }}>Close</Button>
                 <Button type="submit" variant="contained" sx={{ backgroundColor: "#02318A", width: { xs: "100%", sm: "auto" } }}> Save</Button>
               </Box>
             </form>

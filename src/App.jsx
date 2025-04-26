@@ -145,7 +145,7 @@ function App() {
       element: <Login />,
     },
     {
-      path: '/reset',
+      path: '/reset_password',
       element: <ResetPassword />,
     },
   ]);

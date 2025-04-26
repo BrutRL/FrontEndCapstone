@@ -19,11 +19,16 @@
     background: white !important;
   }
 
+  * {
+    font-family: 'Poppins', 'Roboto', sans-serif;
+  }
+  
   /* Scale Up for Better Visibility */
   body {
     transform: scale(1); /* Slightly Larger Content */
     transform-origin: top left;
     overflow: hidden !important; /* Remove Scrollbar */
+    
   }
 
   /* Adjust Font Size and Line Spacing */
@@ -89,4 +94,20 @@
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+}
+/* customCalendar.css */
+.rbc-today {
+  background-color: transparent !important;
+}
+
+.rbc-selected {
+  background-color: transparent !important;
+}
+
+.rbc-event {
+  background-color: #C0C0C0 !important; /* Soft gray or your theme color */
+  color: #111827 !important;           /* Dark text */
+  border: none;
+  border-radius: 6px;
+  padding: 4px;
 }

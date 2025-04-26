@@ -11,18 +11,7 @@ import {index as Schedulecount} from '../../api/schedule';
 import { useTheme } from '@mui/material/styles';
 
 const Item = ({ children, bgColor, gradient }) => (
-  <Paper
-    sx={{
-      padding: { xs: 2, md: 4 }, 
-      textAlign: 'center',
-      color: '#000',
-      background: gradient ? `linear-gradient(to right, ${gradient[0]}, ${gradient[1]})` : bgColor,
-      borderRadius: 2,
-      boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-    }}
-  >
-    {children}
-  </Paper>
+  <Paper sx={{ padding: { xs: 2, md: 4 },  textAlign: 'center', color: '#000', background: gradient ? `linear-gradient(to right, ${gradient[0]}, ${gradient[1]})` : bgColor, borderRadius: 2, boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)', }}>{children}</Paper>
 );
 
 export default function UserDashboard() {
@@ -69,7 +58,6 @@ export default function UserDashboard() {
         const roomData = await Roomcount(token);
         setRoomCount(roomData.data);
       } catch (error) {
-        console.error('Failed to fetch courses', error);
         toast.error('Failed to fetch courses.');
       }
     };
@@ -81,26 +69,14 @@ export default function UserDashboard() {
     const fetchUserRequests = async () => {
       const token = cookies.AUTH_TOKEN;
       const storedUser = JSON.parse(localStorage.getItem('user'));
-      if (!storedUser) {
-        toast.error('No user data found. Please log in again.');
-        return;
-      }
-  
-      try {
         const response = await index(token);
         if (response.ok) {
           const requests = response.data;
           const userRequests = requests.filter(
-            (request) => request.user_id === storedUser.id && request.otp_code && request.otp_status === "pending"
+            (request) => request.user_id === storedUser.id && request.Access_code != null && request.otp_status == 2
           );
           setPinRequestscount(userRequests.length);  
-        } else {
-          toast.error(response.message ?? 'Failed to fetch requests.');
-        }
-      } catch (error) {
-        console.error('Failed to fetch requests', error);
-        toast.error('Failed to fetch requests.');
-      }
+        } 
     };
   
     fetchUserRequests();
@@ -111,28 +87,16 @@ export default function UserDashboard() {
     const fetchUserrequestOtp = async () => {
       const token = cookies.AUTH_TOKEN;
       const storedUser = JSON.parse(localStorage.getItem('user'));
-      if (!storedUser) {
-        toast.error('No user data found. Please log in again.');
-        return;
-      }
-  
-      try {
+ 
         const response = await index(token);
         if (response.ok) {
           const requests = response.data;
           const userRequests = requests.filter(
-            (request) => request.user_id === storedUser.id && request.otp_code === null && request.otp_status === "pending"
+            (request) => request.user_id === storedUser.id && request.Access_code == null && request.otp_status == 2
           );
           setRoomRequestscount(userRequests.length); 
-        } else {
-          toast.error(response.message ?? 'Failed to fetch requests.');
-        }
-      } catch (error) {
-        console.error('Failed to fetch requests', error);
-        toast.error('Failed to fetch requests.');
-      }
-    };
-  
+        } 
+      } 
     fetchUserrequestOtp();
   }, [cookies]);
   
@@ -147,12 +111,6 @@ export default function UserDashboard() {
   useEffect(() => {
     const fetchSchedule = async () => {
       const token = cookies.AUTH_TOKEN;
-      if (!userSched || !userSched.id) {
-        toast.error('User data is missing or invalid. Please log in again.');
-        return;
-      }
-  
-      try {
         const response = await Schedulecount(token);
         if (response.ok) {
           const requests = response.data;
@@ -161,15 +119,8 @@ export default function UserDashboard() {
           );
           setScheduleData(filteredRequests);
           setscheduleCount(filteredRequests.length);
-        } else {
-          toast.error(response.message ?? 'Failed to fetch requests.');
         }
-      } catch (error) {
-        console.error('Failed to fetch requests', error);
-        toast.error('Failed to fetch requests.');
-      }
-    };
-  
+      } 
     if (userSched) {
       fetchSchedule();
     }

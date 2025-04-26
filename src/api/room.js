@@ -65,3 +65,16 @@ export const accessRoom = async (body,token) => {
 
     return await response.json()
 }
+
+export const updateRoomStatus = async (token) => {
+    const response = await fetch(`${url}/rooms/update-status`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  
+    return await response.json();
+  };
+  

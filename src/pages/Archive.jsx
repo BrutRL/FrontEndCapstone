@@ -4,7 +4,6 @@ import { useCookies } from 'react-cookie';
 import { toast } from 'react-toastify';
 import { userAchive as UserIndex } from '../api/user';
 import { courseArchive as CourseIndex } from '../api/course';
-import { scheduleArchieve as ScheduleIndex } from '../api/schedule';
 import { Courserestore, destroy as CourseDestroy } from '../api/course';
 import { destroy as UserDestroy,Userestore } from '../api/user';
 
@@ -12,15 +11,6 @@ function Archive() {
   const [users, setUsers] = useState([]);
   const [cookies] = useCookies(['AUTH_TOKEN']);
   const [courses, setCourse] = useState([]);
-  const [schedules, setSchedule] = useState([]);
- const [open, setOpen] = useState(false);
- const [modalOpen, setModalOpen] = useState(false);
- const handleDrawerOpen = () => {
-   setOpen(true); 
-  };
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
   useEffect(() => {
     const fetchUsers = async () => {
       const token = cookies.AUTH_TOKEN;
@@ -29,11 +19,9 @@ function Archive() {
         if (response.ok) {
           setUsers(response.data);
         } else {
-          console.log('Response not OK:', response); 
           toast.error(response.message ?? 'Failed to fetch users.');
         }
       } catch (error) {
-        console.error('Failed to fetch users', error);
         toast.error('Failed to fetch users.');
       }
     };
@@ -48,11 +36,9 @@ function Archive() {
         if (response.ok) {
           setCourse(response.data);
         } else {
-          console.log('Response not OK:', response); 
           toast.error(response.message ?? 'Failed to fetch courses.');
         }
       } catch (error) {
-        console.error('Failed to fetch courses', error);
         toast.error('Failed to fetch courses.');
       }
     };
@@ -71,7 +57,6 @@ function Archive() {
         toast.error(response.message ?? 'Failed to delete course.');
       }
     } catch (error) {
-      console.error('Failed to delete course', error);
       toast.error('Failed to delete course.');
     }
   };
@@ -90,7 +75,6 @@ function Archive() {
         toast.error(response.message ?? 'Failed to restore course.');
       }
     } catch (error) {
-      console.error('Failed to restore course', error);
       toast.error('Failed to restore course.');
     }
   };
@@ -102,11 +86,9 @@ function Archive() {
         setUsers((prevUsers) => prevUsers.filter((users) => users.id !== userId));
         toast.success('User deleted successfully.');
       } else {
-        console.log('Response not OK:', response);
         toast.error(response.message ?? 'Failed to user course.');
       }
     } catch (error) {
-      console.error('Failed to delete user', error);
       toast.error('Failed to delete user.');
     }
   };
@@ -120,11 +102,9 @@ function Archive() {
         ));
         toast.success('User restored successfully.');
       } else {
-        console.log('Response not OK:', response);
         toast.error(response.message ?? 'Failed to restore user.');
       }
     } catch (error) {
-      console.error('Failed to restore user', error);
       toast.error('Failed to restore user.');
     }
   };

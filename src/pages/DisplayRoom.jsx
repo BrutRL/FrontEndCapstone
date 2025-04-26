@@ -12,8 +12,6 @@ import {index as Schedule_index } from '../api/schedule';
 import noroom_found from '../assets/images/NoroomFound.png';
 import { useMediaQuery } from "@mui/material";
 import { useTheme } from '@mui/material/styles';
-import {index  as AccessCode_index} from '../api/otp_request';
-import { set } from 'date-fns'
 import {update as RoomUpdate} from '../api/room';
 import '../App.css';
 import { useNavigate } from 'react-router-dom';
@@ -59,6 +57,7 @@ function DisplayRoom() {
   const [sched_open,setSched_open] = useState(false);
   const [Sched_data, setSched_data] = useState([]);
   const [error,setErrors] = useState([]);
+  const [message,setMessage] = useState({});
   const navigate = useNavigate();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -83,7 +82,6 @@ function DisplayRoom() {
           toast.error(response.message ?? 'Failed to fetch users.')
         }
       } catch (error) {
-        console.error('Failed to fetch users', error)
         toast.error('Failed to fetch users.')
       }
     }
@@ -99,6 +97,9 @@ function DisplayRoom() {
     setAssignType(type)
   }
 
+  const generateOtpCode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString().padStart(6, '0'); 
+  }
   const handleOtpAssign = async () => {
     if (selectedUser && accessRoomDialog && usedAt && endTime && assignedDate && Purpose) {
       try {
@@ -106,8 +107,8 @@ function DisplayRoom() {
         const data = {
           user_id: selectedUser.id,
           room_id: accessRoomDialog.id,
-          Access_code: otpCode,
-          otp_status: 2,
+          //Access_code: otpCode,
+          //access_status: 2,
           generated_at: assignedDate,
           used_at: usedAt,
           end_time: endTime,
@@ -121,17 +122,17 @@ function DisplayRoom() {
           setErrors({}); 
           navigate('/admin/access_code', { replace: true });
           
-          /* const roomUpdateBody = { status: 3 };
-            //const roomUpdateResponse = await RoomUpdate(roomUpdateBody, accessRoomDialog.id, cookies.AUTH_TOKEN);
+          const roomUpdateBody = { status: 3 };
+            const roomUpdateResponse = await RoomUpdate(roomUpdateBody, accessRoomDialog.id, cookies.AUTH_TOKEN);
     
-           // if (roomUpdateResponse.ok) {
-              //console.log('Room Status Updated to Assigned');
+            if (roomUpdateResponse.ok) {
+              console.log('Room Status Updated to Assigned');
            
   
             } else {
               console.error('Failed to update room status:', roomUpdateResponse);
               toast.error(roomUpdateResponse?.message || 'Failed to update room status.');
-            }*/
+            }
            
         } else {
          
@@ -139,6 +140,7 @@ function DisplayRoom() {
             setErrors(response.errors || response.data.errors);
           } else {
             toast.error(response.message || 'Failed to assign request.');
+            setMessage(response.message);
           }
         }
       } catch (error) {
@@ -159,7 +161,7 @@ function DisplayRoom() {
         const data = {
           user_id: selectedUser.id,
           room_id: accessRoomDialog.id, 
-          otp_status: 1,
+          //access_status: 1,
           generated_at: assignedDate,
           used_at: usedAt,
           end_time: endTime,
@@ -172,17 +174,17 @@ function DisplayRoom() {
           setErrors({}); 
           navigate('/admin/room_request', { replace: true });
           
-        /* const roomUpdateBody = { status: 3 };
-          //const roomUpdateResponse = await RoomUpdate(roomUpdateBody, accessRoomDialog.id, cookies.AUTH_TOKEN);
+         const roomUpdateBody = { status: 2 };
+          const roomUpdateResponse = await RoomUpdate(roomUpdateBody, accessRoomDialog.id, cookies.AUTH_TOKEN);
   
-         // if (roomUpdateResponse.ok) {
-            //console.log('Room Status Updated to Assigned');
+         if (roomUpdateResponse.ok) {
+            console.log('Room Status Updated to Assigned');
          
 
           } else {
             console.error('Failed to update room status:', roomUpdateResponse);
             toast.error(roomUpdateResponse?.message || 'Failed to update room status.');
-          }*/
+          }
         } else {
           if (response.errors || response.data?.errors) {
             setErrors(response.errors || response.data.errors);
@@ -210,7 +212,6 @@ function DisplayRoom() {
                 toast.error(response.message ?? 'Failed to fetch Schedule Data.');
             }
         } catch (error) {
-            console.error('Failed to fetch Schedule Data', error);
             toast.error('Failed to fetch Schedule Data.');
         }
     };
@@ -218,9 +219,6 @@ function DisplayRoom() {
     fetch_Sched();
 }, [cookies]);
 
-  const generateOtpCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString().padStart(6, '0'); 
-  }
 
   const filteredRooms = rooms.filter(room =>
     room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -332,7 +330,7 @@ function DisplayRoom() {
                <Grid item xs={12} sm={6}>
                  <Select value={assignType} onChange={(e) => handleRequestTypeChange(e.target.value)} displayEmpty fullWidth sx={{ backgroundColor: '#ffffff',borderRadius: 1,}}>
                    <MenuItem value="" disabled><em>Select request type</em> </MenuItem>
-                   {accessRoomDialog?.name == 'R 404' ? (
+                   {accessRoomDialog?.name == 'R404' ? (
                        <MenuItem value="access_code">Access Code Request</MenuItem>
                    ) : (
                      <MenuItem value="room">Room Request</MenuItem>
@@ -340,19 +338,19 @@ function DisplayRoom() {
                  </Select>
                </Grid>
                <Grid item xs={12} sm={6}>
-                 <TextField fullWidth label="Assigned Date" type="date" value={assignedDate} onChange={(e) => setAssignedDate(e.target.value)} InputLabelProps={{shrink: true, sx: { color: '#374151' },}}sx={{ '& .MuiOutlinedInput-root': {backgroundColor: '#ffffff',borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151',}, }}/></Grid>
+                 <TextField fullWidth label="Assigned Date" type="date" value={assignedDate} onChange={(e) => setAssignedDate(e.target.value)} InputLabelProps={{shrink: true, sx: { color: '#374151' },}}sx={{ '& .MuiOutlinedInput-root': {backgroundColor: '#ffffff',borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151',}, }} error={!!error?.generated_at}helperText={error?.generated_at?.[0]}/></Grid>
                <Grid item xs={12} sm={6}>
-                 <TextField fullWidth label="Used At" type="time" value={usedAt} onChange={(e) => setUsedAt(e.target.value)} InputLabelProps={{ shrink: true, sx: { color: '#374151' },}}sx={{'& .MuiOutlinedInput-root': {backgroundColor: '#ffffff',borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151',},}}/></Grid>
+                 <TextField fullWidth label="Used At" type="time" value={usedAt} onChange={(e) => setUsedAt(e.target.value)} InputLabelProps={{ shrink: true, sx: { color: '#374151' },}}sx={{'& .MuiOutlinedInput-root': {backgroundColor: '#ffffff',borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151',},}} error={!!error?.used_at}helperText={error?.used_at?.[0]}/></Grid>
     
                <Grid item xs={12} sm={6}>
-                 <TextField fullWidth label="End Time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} InputLabelProps={{ shrink: true, sx: { color: '#374151' },}}sx={{'& .MuiOutlinedInput-root': { backgroundColor: '#ffffff', borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151',},}}/>
+                 <TextField fullWidth label="End Time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} InputLabelProps={{ shrink: true, sx: { color: '#374151' },}}sx={{'& .MuiOutlinedInput-root': { backgroundColor: '#ffffff', borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151',},}} error={!!error?.end_time}helperText={error?.end_time?.[0]}/>
                </Grid>
 
                <Grid item xs={12}>
-                 <TextField fullWidth label="Purpose" type="text" value={Purpose} onChange={(e) => setPurpose(e.target.value)} InputLabelProps={{shrink: true,sx: { color: '#374151' },}}sx={{'& .MuiOutlinedInput-root': { backgroundColor: '#ffffff', borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151', }, }}/></Grid>
+                 <TextField fullWidth label="Purpose" type="text" value={Purpose} onChange={(e) => setPurpose(e.target.value)} InputLabelProps={{shrink: true,sx: { color: '#374151' },}}sx={{'& .MuiOutlinedInput-root': { backgroundColor: '#ffffff', borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151', }, }} error={!!error?.purpose}helperText={error?.purpose?.[0]}/></Grid>
           
                <Grid item xs={12} display="flex" justifyContent="flex-start" gap={2}>
-                 <Button sx={{ boxShadow: 1, textTransform: 'none', fontWeight: 'bold', background: '#D9D9D9', color: 'black', }}onClick={() => { setSelectedUser(null); setAssignType(''); setUsedAt(''); setEndTime(''); setAssignedDate(''); setPurpose('');}}> Cancel </Button>
+                 <Button sx={{ boxShadow: 1, textTransform: 'none', fontWeight: 'bold', background: '#D9D9D9', color: 'black', }}onClick={() => { setSelectedUser(null); setAssignType(''); setUsedAt(''); setEndTime(''); setAssignedDate(''); setPurpose('');setErrors({});}}> Cancel </Button>
                  <Button variant="contained" sx={{ boxShadow: 3, textTransform: 'none', fontWeight: 'bold', background: '#02318A',}} onClick={() => {
                      if (assignType === 'access_code') {
                        handleOtpAssign();

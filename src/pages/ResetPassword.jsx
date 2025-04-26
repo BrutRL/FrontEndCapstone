@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { resetPassword } from '../api/auth'; // API call for resetting password
-import { TextField, Button, Card, CardContent, Typography, Alert, Container } from '@mui/material';
-
+import { TextField, Button, Card, CardContent, Typography, Alert, IconButton, InputAdornment, Box } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material'; // Import visibility icons
+import background from '../assets/images/bgImg.jpg';
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ export default function ResetPassword() {
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false); // State to toggle confirm password visibility
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,7 +32,6 @@ export default function ResetPassword() {
         password_confirmation: passwordConfirmation,
       });
   
-      console.log('API Response:', response); // Debugging
   
       if (response.ok) {
         setSuccess('Password reset successfully! Redirecting to login...');
@@ -38,29 +40,37 @@ export default function ResetPassword() {
         setError(response.message || 'Failed to reset password.');
       }
     } catch (error) {
-      console.error('Error resetting password:', error);
       setError('An error occurred while resetting password.');
     }
   };
-  
 
   return (
-    <Container maxWidth="sm">
-      <Card sx={{ mt: 5, p: 3, textAlign: 'center' }}>
+    <Box sx={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", padding: 2, backgroundImage: `url(${background})`, backgroundRepeat:"no-repeat", backgroundSize: "cover" }}>
+      <Card sx={{ mt: 5, p: 3, textAlign: 'center', backgroundColor: 'rgba(255, 255, 255, 1)', width: '100%', maxWidth: 600,  boxSizing: 'border-box', }}>
         <CardContent>
-          <Typography variant="h5" gutterBottom>Reset Password</Typography>
-          {error && <Alert severity="error">{error}</Alert>}
-          {success && <Alert severity="success">{success}</Alert>}
+          <Typography variant="h5" gutterBottom> Reset your password</Typography>{error && <Alert severity="error">{error}</Alert>}{success && <Alert severity="success">{success}</Alert>}
+          <Typography sx={{fontSize: '11px',color: 'text.secondary'}}> (Make sure to change your password within 6 minutes. After this time frame, the token will expire)</Typography>
           <form onSubmit={handleSubmit}>
-            <TextField label="New Password" type="password" fullWidth margin="normal" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            <TextField label="Confirm Password" type="password" fullWidth margin="normal" value={passwordConfirmation} onChange={(e) => setPasswordConfirmation(e.target.value)}required
-            />
-            <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
-              Reset Password
-            </Button>
+            <TextField label="New Password" type={showPassword ? 'text' : 'password'} fullWidth margin="normal" value={password} onChange={(e) => setPassword(e.target.value)} required InputProps={{endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}/>
+            <TextField label="Confirm Password" type={showPasswordConfirmation ? 'text' : 'password'} fullWidth margin="normal" value={passwordConfirmation} onChange={(e) => setPasswordConfirmation(e.target.value)} required InputProps={{endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)} edge="end">
+                      {showPasswordConfirmation ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }} />
+            <Button type="submit" variant="contained" sx={{ mt: 2, backgroundColor: '#1632A2',width:{xs: '100%',sm: '300px'},'&:hover': {backgroundColor: '#0c2461',},}} fullWidth> Reset Password</Button>
           </form>
         </CardContent>
       </Card>
-    </Container>
+    </Box>
   );
 }

@@ -19,7 +19,7 @@ function Assign_sched() {
   const [courseData, setCourseData] = useState([]);
   const [open,setOpen] = useState(false);
   const [openView,setopenView] = useState(false);
-  const year_course = ["BSIT -3D","BSIT -4D", "BSIT -1","BSIT -2D","BEED -3E"]
+  const year_course = ["BSIT - 1D", "BSIT - 2D","BSIT - 3D", "BSIT - 4D", "BIT - 1E","BIT - 2E", "BIT - 3E","BIT  - 4E","BEED - 1C","BEED -2C","BEED - 3C","BEED - 4C","BSED Eng - 1B","BSED Eng - 2B","BSED Eng - 3B","BSED Eng - 4B","BTLED - 1A","BTLED - 2A","BTLED - 3A","BTLED - 4A"]
   const [selectedYear, setSelectedYear] = useState("All");
   const [formValues, setFormValues] = useState({ room_id: "", user_id: "", course_id: "", assigned_date: "", end_date: "", days_in_week: [], start_time: "", end_time: "", status: 2, year: "",});
   const dayMapping = { Monday: 0, Tuesday: 1, Wednesday: 2, Thursday: 3, Friday: 4, Saturday: 5, Sunday: 6,};
@@ -29,6 +29,7 @@ function Assign_sched() {
   const [filteredCourses, setFilteredCourses] = useState(year_course);
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const [errorMessage, setErrorMessage] = useState("");
 
   
   
@@ -102,7 +103,6 @@ function Assign_sched() {
  
 
   
- 
   const handleSave = async (e) => {
     e.preventDefault();
     const token = cookies.AUTH_TOKEN;
@@ -115,24 +115,34 @@ function Assign_sched() {
   
     try {
       const response = await store(transformedFormValues, token);
-    
+  
+      // Ensure we parse the response properly
+      const responseData = await response.json();
       if (response.ok) {
         toast.success('Schedule saved successfully');
-        setFormValues({ ...formValues, room_id: "", user_id: "", course_id: "", assigned_date: "", end_date: "", days_in_week: [], start_time: "", end_time: "", status: "", year: "" });
+        setFormValues({
+          room_id: "", user_id: "", course_id: "", assigned_date: "", end_date: "", days_in_week: [], start_time: "", end_time: "", status: "", year: ""
+        });
         setErrors({});
+        setErrorMessage(""); 
       } else {
-        if (response.data?.errors) {
-          setErrors(response.data.errors);
-          console.log(response.data.errors)
-        } else {
-          toast.error(response.message ?? "Failed to create schedule.");
-        }
+        // Check if the response contains validation errors
+        if (responseData?.errors) {
+          setErrors(responseData.errors); // Update the errors state with backend validation errors
+         // toast.error("Please fix the highlighted errors.");
+        } const message = responseData.message ?? "Failed to create schedule.";
+        setErrorMessage(message); // Store error message in state
       }
     } catch (error) {
-      console.error('Failed to create schedule', error);
-      toast.error('Failed to create schedule.');
-    } 
+      if (error.response && error.response.data?.errors) {
+        setErrors(error.response.data.errors); 
+        toast.error("Validation failed. Please fix the form.");
+      } else {
+        toast.error("Something went wrong while saving.");
+      }
+    }
   };
+  
 
  const Openset_Sched = (year) => {
   setFormValues((prevValues) => ({
@@ -152,6 +162,8 @@ function Assign_sched() {
  }
  const Closeset_Sched = () =>{
    setOpen(false);
+   setErrors({});
+   setErrorMessage("");
  }
 
  const Viewsched_Open = async (selectedYear) => {
@@ -244,23 +256,30 @@ const handleSearchChange = (e) => {
                   <MenuItem value="4">Year 4</MenuItem>
                 </Select>
               </FormControl>
-                <Box display="flex" flexWrap="wrap" justifyContent="left" gap={2} sx={{mt: 4}}>
+              <Grid container spacing={3} justifyContent="flex-start">
                 {filteredCourses.length > 0 ? (
                   filteredCourses.map((year, index) => (
-                    <Card key={index} sx={{ minWidth: isSmallScreen ? '100%' : 300, maxWidth: 350 ,  transition: 'transform 0.3s, box-shadow 0.3s','&:hover': { transform: 'scale(1.05)', boxShadow: '10px 10px 20px rgba(0, 0, 0, 0.2)', },}}>
+                    <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
+                    <Card  sx={{backgroundColor: '#f0f4ff', transition: 'transform 0.3s, box-shadow 0.3s','&:hover': { transform: 'scale(1.05)', boxShadow: '10px 10px 20px rgba(0, 0, 0, 0.2)', },}}>
                       <CardContent>
                         <Typography align="center">Year: {year}</Typography>
                         <Box sx={{  display: 'flex',  flexDirection: isSmallScreen ? 'column' : 'row',  justifyContent: 'center',  gap: 1,  mt: 2 }}>
-                          <Button sx={{  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)", backgroundColor: '#1632A2',color: "white", whiteSpace: 'nowrap', fontWeight: 'bold',"&:hover": { backgroundColor: "#02318A", }, }} onClick={() => Viewsched_Open(year)}>View Schedule </Button>
-                          <Button sx={{boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",backgroundColor: '#16A22B',color: "white", whiteSpace: 'nowrap', fontWeight: 'bold',"&:hover": { backgroundColor: "#26A338", }, }}   onClick={() => Openset_Sched(year)}>Set Schedule</Button>
+                          <Button sx={{  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",  background: 'linear-gradient(to right, #3b82f6, #1e40af)',  boxShadow: '0px 4px 12px rgba(59, 130, 246, 0.3)',color: "white", whiteSpace: 'nowrap', fontWeight: 'bold',"&:hover": {   background: 'linear-gradient(to right, #2563eb, #1d4ed8)', }, }} onClick={() => Viewsched_Open(year)}>View Schedule </Button>
+                          
+                          <Button sx={{boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",  background: 'linear-gradient(to right, #22c55e, #15803d)',color: "white", whiteSpace: 'nowrap',boxShadow: '0px 4px 12px rgba(34, 197, 94, 0.3)', fontWeight: 'bold',"&:hover": { background: 'linear-gradient(to right, #16a34a, #166534)', }, }}   onClick={() => Openset_Sched(year)}>Set Schedule</Button>
                         </Box>
                       </CardContent>
                     </Card>
+                    </Grid>
                   ))):(
-                    <Typography variant="h6" align="center" sx={{ width: '100%', color: 'black', fontWeight: 'bold', mt: 3,}}> Year didn't exist</Typography>)}
-                </Box>
+                    <Grid item xs={12}>
+                    <Typography variant="h6" align="center" sx={{ width: '100%', color: 'black', fontWeight: 'bold', mt: 3,}}> Year didn't exist</Typography>
+                    </Grid>)}
+                </Grid>
               <Dialog  open={open} onClose={Closeset_Sched} fullWidth fullScreen={isSmallScreen}  maxWidth="lg" sx={{"& .MuiDialog-paper": {width: "100%",maxHeight: "90vh", margin: 0,padding: 5,},"& .MuiDialog-paper::-webkit-scrollbar": {display: "none", },}}>
               <Typography variant="h4" component="h1" gutterBottom sx={{textAlign: 'center'}}>Creating Schedule </Typography>
+              {errorMessage && (<Typography color="error" variant="body5" textAlign='center'> {errorMessage} </Typography>)}
+
                 <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
                     <TextField select label="Room" name="room_id" value={formValues.room_id} onChange={handleChange} variant="outlined" fullWidth margin="normal" error={!!errors.room_id} helperText={errors.room_id ? errors.room_id.join(', ') : ''} >
@@ -285,7 +304,7 @@ const handleSearchChange = (e) => {
                     <TextField select label="Subject" name="course_id" value={formValues.course_id} onChange={handleChange} variant="outlined" fullWidth margin="normal" error={!!errors.course_id} helperText={errors.course_id ? errors.course_id.join(', ') : ''} >
                       {courseData.map((course) => (
                         <MenuItem key={course.id} value={course.id}>
-                          {course.code}
+                          {course.name}
                         </MenuItem>
                       ))}
                     </TextField>
@@ -329,7 +348,8 @@ const handleSearchChange = (e) => {
                           scheduleData.map((row, index) => (
                             <Box key={index} sx={{ border: "1px solid #ccc", borderRadius: "8px", padding: 2, mb: 2, boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",}}>
                               <Box sx={{ mb: 1, fontWeight: "bold" }}>Day: {formatDays(row.days_in_week)}</Box>
-                              <Box sx={{ mb: 1 }}>Time: {row.start_time.slice(0, 5)} - {row.end_time.slice(0, 5)}</Box>
+                              Time: {new Date(`1970-01-01T${row.start_time}`).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - 
+                              {new Date(`1970-01-01T${row.end_time}`).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                               <Box sx={{ mb: 1 }}>Room: {row.room?.name}</Box>
                               <Box sx={{ mb: 1 }}>Course Code: {row.course?.code}</Box>
                               <Box sx={{ mb: 1 }}>Descriptive Title: {row.course?.name}</Box>
@@ -359,9 +379,7 @@ const handleSearchChange = (e) => {
                           scheduleData.map((row, index) => (
                             <TableRow key={index}>
                               <TableCell align="center">{formatDays(row.days_in_week)}</TableCell>
-                              <TableCell align="center">
-                                {row.start_time.slice(0, 5)} - {row.end_time.slice(0, 5)}
-                              </TableCell>
+                              <TableCell align="center"> {new Date(`1970-01-01T${row.start_time}`).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - {new Date(`1970-01-01T${row.end_time}`).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</TableCell>
                               <TableCell align="center">{row.room?.name}</TableCell>
                               <TableCell align="center">{row.course?.code}</TableCell>
                               <TableCell align="center">{row.course?.name}</TableCell>

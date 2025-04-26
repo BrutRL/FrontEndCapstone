@@ -22,7 +22,6 @@ function LogsHistory() {
           toast.error(response.message ?? 'Failed to fetch logs.');
         }
       } catch (error) {
-        console.error('Failed to fetch logs', error);
         toast.error('Failed to fetch logs.');
       }
     };

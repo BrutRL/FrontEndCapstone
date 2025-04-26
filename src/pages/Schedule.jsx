@@ -16,20 +16,14 @@ export default function Schedule() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [sortOrder, setSortOrder] = useState('All');
   const [selectedLocation, setSelectedLocation] = useState('');
-  const dayMapping = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayMapping = [ 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday','Sunday'];
   const [years, setYears] = useState([]);
-  const year_course = ["BSIT -3D","BSIT -4D", "BSIT -1","BSIT -2D","BEED -3E"]
+  const year_course = ["BSIT - 1D","BSIT - 2D", "BSIT - 3D"]
   const [selectedYear, setSelectedYear] = useState("All");
- const [filteredCourses, setFilteredCourses] = useState(year_course);
 
   useEffect(() => {
     const fetchData = async () => {
       const token = cookies.AUTH_TOKEN;
-      if (!token) {
-        toast.error('No authentication token found. Please log in again.');
-        return;
-      }
-
       try {
         const response = await index(token);
         if (response.ok) {
@@ -40,7 +34,6 @@ export default function Schedule() {
           toast.error(response.message ?? 'Failed to fetch schedules.');
         }
       } catch (error) {
-        console.error('Failed to fetch schedules', error);
         toast.error('Failed to fetch schedules.');
       }
     };
@@ -66,10 +59,6 @@ export default function Schedule() {
     setSearchQuery('');
   };
 
-  const handleSortClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
   const handleSortClose = () => {
     setAnchorEl(null);
   };
@@ -90,16 +79,7 @@ export default function Schedule() {
 
   const handleYearChange = (event) => {
     const year = event.target.value;
-    setSelectedYear(year); // Update the selected year
-  
-    // Filter the rows based on the selected year
-    if (year === "All") {
-      setFilteredRows(rows); // Show all rows when "All" is selected
-    } else {
-      // Filter rows by the selected year
-      const filtered = rows.filter(row => row.year === year);
-      setFilteredRows(filtered); // Update the filtered rows
-    }
+    setSelectedYear(year); // ✅ this is enough
   };
   
   
@@ -117,7 +97,9 @@ export default function Schedule() {
       (typeof row.status === 'string' && row.status.toLowerCase().includes(searchQuery.toLowerCase()));
   
     // Filter by selected year
-    const matchesYear = selectedYear === "All" || row.year.toString() === selectedYear;
+    const matchesYear = selectedYear === "All" || row.year?.match(/\d+/)?.[0] === selectedYear;
+
+
   
     return matchesLocation && matchesSearchTerm && matchesYear;
   });
@@ -132,11 +114,10 @@ export default function Schedule() {
          <InputLabel>Filter by Year</InputLabel>
             <Select value={selectedYear} onChange={handleYearChange} label="Filter by Year">
               <MenuItem value="All">All</MenuItem>
-              {years.map((year) => (
-                <MenuItem key={year} value={year}>
-                  {`Year ${year}`}
-                </MenuItem>
-              ))}
+                <MenuItem value="1">Year 1</MenuItem>
+                <MenuItem value="2">Year 2</MenuItem>
+                <MenuItem value="3">Year 3</MenuItem>
+                <MenuItem value="4">Year 4</MenuItem>
             </Select>
       </FormControl>
 

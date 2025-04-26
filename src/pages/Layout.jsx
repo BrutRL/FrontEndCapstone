@@ -30,53 +30,25 @@ import LoginIcon from '@mui/icons-material/Login';
 import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
 import { useCookies } from 'react-cookie';
 import { toast } from 'react-toastify';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
-import Badge from '@mui/material/Badge';
 import { useState } from 'react';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import { logout } from '../api/auth';
 import InventoryIcon from '@mui/icons-material/Inventory';
-import PrintIcon from '@mui/icons-material/Print';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Collapse from '@mui/material/Collapse';
 import AddBoxIcon from '@mui/icons-material/AddBox';
-import EventNoteIcon from '@mui/icons-material/EventNote';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+import EventIcon from '@mui/icons-material/Event';
 import '../App.css';
 
 const drawerWidth = 240;
 
-const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
-  ({ theme, open }) => ({
-    flexGrow: 1,
-    padding: theme.spacing(3),
-    transition: theme.transitions.create('margin', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-    marginLeft: open ? 0 : `-${drawerWidth}px`,
-  }),
-);
-
-const DrawerHeader = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  padding: theme.spacing(0, 1),
-  ...theme.mixins.toolbar,
-  justifyContent: 'flex-end',
-}));
 
 const Layout = ({ children, count }) => {
   const [open, setOpen] = React.useState(false);
-  const [modalOpen, setModalOpen] = React.useState(false);
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
@@ -91,13 +63,6 @@ const Layout = ({ children, count }) => {
     setOpen(false);
   };
 
-  const handleModalOpen = () => {
-    setModalOpen(true);
-  };
-
-  const handleModalClose = () => {
-    setModalOpen(false);
-  };
 
   const handleSubmenuClick = (menuText) => {
     setOpenSubmenu(openSubmenu === menuText ? null : menuText);
@@ -116,7 +81,6 @@ const Layout = ({ children, count }) => {
         toast.error(response.message ?? 'Failed to log out.');
       }
     } catch (error) {
-      console.error('Failed to log out', error);
       toast.error('Failed to log out.');
     }
   };
@@ -132,7 +96,6 @@ const Layout = ({ children, count }) => {
         { text: 'Access Code Request', icon: <LockOpenIcon />, link: 'access_code' },
         { text: 'Display Rooms', icon: <MeetingRoomIcon />, link: 'display_room' },
        // { text: 'Room Schedules', icon: <EventNoteIcon />, link: 'room_scheds' },
-        { text: 'Requested Room Logs', icon: <LoginIcon />, link: 'logs' },
       ],
     },
     {
@@ -147,97 +110,37 @@ const Layout = ({ children, count }) => {
     { text: 'Courses', icon: <SchoolOutlinedIcon />, link: 'course' },
     { text: 'Teachers', icon: <LocalLibraryIcon />, link: 'teachers' },
     { text: 'Archive', icon: <InventoryIcon />, link: 'archive' },
-    { text: 'Activity Logs', icon: <ExitToAppIcon />, link: 'logs_history' },
+    { text: 'Logs', icon: <ExitToAppIcon />, 
+      submenu:[
+      {text: 'Activity Logs',icon:<EventIcon/>, link: 'logs_history'},
+      {text: 'Requested Room Logs', icon: <LoginIcon />, link: 'logs' },
+       ],
+     },
   ];
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <CssBaseline />
-      <AppBar
-        position="fixed"
-        open={open}
-        sx={{
-          width: isSmallScreen ? '100%' : `calc(100% - ${open ? drawerWidth : 0}px)`,
-          transition: 'width 0.3s ease',
-        }}
-        className="hide-on-print"
-      >
+        <AppBar position="fixed" open={open} sx={{ width: isSmallScreen ? '100%' : `calc(100% - ${open ? drawerWidth : 0}px)`, transition: 'width 0.3s ease',}} className="hide-on-print">
         <Toolbar sx={{ background: 'linear-gradient(to bottom, #373f88, #4f5891)' }}>
           <Grid container alignItems="center" justifyContent="space-between" wrap="nowrap">
             <Grid item>
-              <IconButton
-                color="inherit"
-                aria-label="open drawer"
-                onClick={handleDrawerOpen}
-                edge="start"
-                sx={{ mr: 2, display: open && !isSmallScreen ? 'none' : 'block' }}
-              >
+              <IconButton color="inherit" aria-label="open drawer" onClick={handleDrawerOpen} edge="start" sx={{ mr: 2, display: open && !isSmallScreen ? 'none' : 'block' }}>
                 <MenuIcon />
               </IconButton>
             </Grid>
             <Grid item xs>
-              <Typography
-                variant="h6"
-                noWrap
-                component="div"
-                sx={{ textAlign: 'left', fontSize: isSmallScreen ? '0.85rem' : '1.25rem' }}
-              >
-                University of Rizal System Cainta
-              </Typography>
+              <Typography variant="h6" noWrap component="div" sx={{ textAlign: 'left', fontSize: isSmallScreen ? '0.85rem' : '1.25rem' }}> University of Rizal System Cainta</Typography>
             </Grid>
-            <Grid
-              item
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                mr: isSmallScreen ? '10px' : '20px',
-                gap: 2,
-              }}
-            >
-              <Button
-                variant="contained"
-                sx={{
-                  backgroundColor: 'rgb(2 49 138)',
-                  fontSize: isSmallScreen ? '0.65rem' : '1rem',
-                  padding: isSmallScreen ? '5px 10px' : '8px 16px',
-                }}
-                onClick={handleLogout}
-              >
-                Log Out
-              </Button>
+            <Grid item sx={{ display: 'flex', alignItems: 'center', mr: isSmallScreen ? '10px' : '20px', gap: 2,}} >
+              <Button variant="contained" sx={{ backgroundColor: 'rgb(2 49 138)', fontSize: isSmallScreen ? '0.65rem' : '1rem', padding: isSmallScreen ? '5px 10px' : '8px 16px',}}onClick={handleLogout}>Log Out</Button>
             </Grid>
           </Grid>
         </Toolbar>
       </AppBar>
-      <Drawer
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            width: drawerWidth,
-            boxSizing: 'border-box',
-            background: 'linear-gradient(to bottom, #373f88, #4f5891)',
-            color: 'white',
-            height: '100vh',
-            overflowY: 'auto',
-          },
-        }}
-        variant={isSmallScreen ? 'temporary' : 'persistent'}
-        anchor="left"
-        open={open}
-        onClose={isSmallScreen ? handleDrawerClose : undefined}
-      >
+      <Drawer sx={{ width: drawerWidth, flexShrink: 0, '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box', background: 'linear-gradient(to bottom, #373f88, #4f5891)', color: 'white', height: '100vh', overflowY: 'auto', },}}variant={isSmallScreen ? 'temporary' : 'persistent'}anchor="left"open={open}onClose={isSmallScreen ? handleDrawerClose : undefined}>
         <Toolbar>
-          <IconButton
-            onClick={handleDrawerClose}
-            sx={{
-              color: 'white',
-              backgroundColor: 'rgb(2 49 138)',
-              '&:hover': {
-                backgroundColor: 'rgb(29 78 216)',
-              },
-            }}
-          >
+          <IconButton onClick={handleDrawerClose} sx={{ color: 'white', backgroundColor: 'rgb(2 49 138)','&:hover': {backgroundColor: 'rgb(29 78 216)',},}}>
             {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
           </IconButton>
         </Toolbar>
@@ -273,20 +176,12 @@ const Layout = ({ children, count }) => {
           )}
         </List>
       </Drawer>
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          transition: 'margin 0.3s ease',
-          marginLeft: open && !isSmallScreen ? `${drawerWidth}px` : '0',
-        }}
-      >
+      <Box component="main" sx={{ flexGrow: 1, p: 3, transition: 'margin 0.3s ease', marginLeft: open && !isSmallScreen ? `${drawerWidth}px` : '0',}}>
         <Toolbar />
         <Outlet />
       </Box>
     </Box>
-  );
+  );  
 };
 
 export default Layout;

@@ -5,8 +5,6 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { toast } from 'react-toastify';
 import { useCookies } from 'react-cookie';
-import {update} from '../../api/schedule';
-import {store} from '../../api/schedule';
 function UserSchedule() {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm')); 
@@ -36,83 +34,12 @@ function UserSchedule() {
           toast.error(response.message ?? 'Failed to fetch requests.');
         }
       } catch (error) {
-        console.error('Failed to fetch requests', error);
         toast.error('Failed to fetch requests.');
       }
     };
 
     fetchUserRequests();
   }, [cookies, user.id]);
-
-  const handleAccept = async (id) => {
-  const token = cookies.AUTH_TOKEN;
-  const body = { status: '1' };
-  try {
-    const response = await update(body, id, token);
-    if (response.ok) {
-      toast.success('Request marked as Confirmed!');
-      setSchedule((prevRequests) =>
-        prevRequests.map((request) =>
-          request.id === id ? { ...request, status: '1' } : request
-        )
-      );
-    } else {
-      console.error('API Error:', response);
-      toast.error(response.message || 'Failed to confirm the request.');
-    }
-  } catch (error) {
-    console.error('Failed to confirm the request:', error);
-    toast.error('Failed to confirm the request.');
-  }
-};
-
-const handleReject = async (id) => {
-  const token = cookies.AUTH_TOKEN;
-  const body = { status: '3' }; 
-  try {
-    const response = await update(body, id, token);
-    if (response.ok) {
-      toast.success('Request marked as Cancel!');
-      setSchedule((prevRequests) =>
-        prevRequests.map((request) =>
-          request.id === id ? { ...request, status: '3' } : request
-        )
-      );
-    } else {
-      console.error('API Error:', response);
-      toast.error(response.message || 'Failed to cancel the request.');
-    }
-  } catch (error) {
-    console.error('Failed to cancel the request:', error);
-    toast.error('Failed to cancel the request.');
-  }
-};
-
-
-  const renderStatusCell = (request) => {
-    const statusValue = Number(request.status);
-    const statusText = statusValue == 1 ? 'Accepted' : statusValue == 2 ? 'Pending' : statusValue == 3 ? 'Rejected' : 'Unknown';
-    const statusColor = statusValue == 1 ? '#16A22B' : statusValue == 2 ? '#E87E21' : statusValue == 3 ? '#E71717' : 'grey';
-
-    return (
-      <TableCell align='center'>
-        {statusValue === 2 ? (
-          <>
-            <Button variant="contained" size="small" onClick={() => handleAccept(request.id)} sx={{ backgroundColor: '#16A22B', color: 'white', marginRight: '5px' }}>
-              Accept
-            </Button>
-            <Button variant="contained" size="small" onClick={() => handleReject(request.id)} sx={{ backgroundColor: '#E71717', color: 'white' }}>
-              Reject
-            </Button>
-          </>
-        ) : (
-          <span style={{ backgroundColor: statusColor, color: 'white', padding: '8px', borderRadius: '5px' }}>
-            {statusText}
-          </span>
-        )}
-      </TableCell>
-    );
-  };
 
   return (
     <Box sx={{ padding: 2 }}>

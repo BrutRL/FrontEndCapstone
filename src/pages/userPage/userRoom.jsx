@@ -12,9 +12,6 @@ import {index as Schedule_index } from '../../api/schedule';
 import noroom_found from '../../assets/images/NoroomFound.png';
 import { useMediaQuery } from "@mui/material";
 import { useTheme } from '@mui/material/styles';
-import {index  as AccessCode_index} from '../../api/otp_request';
-import { set } from 'date-fns'
-import {update as RoomUpdate} from '../../api/room';
 import '../../App.css';
 import { useNavigate } from 'react-router-dom';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -177,7 +174,6 @@ function DisplayRoom() {
           }
         }
       } catch (error) {
-        console.error('Failed to assign request', error);
         setErrors(error?.response?.data?.errors || {});
         toast.error('Failed to assign request.');
       }
@@ -221,24 +217,6 @@ function DisplayRoom() {
     if (!Array.isArray(daysArray) || daysArray.length === 0) return 'N/A';
     return daysArray.map((day) => dayMapping[day] || 'Invalid Day').join(', ');
   };
-  /*useEffect(() => {
-    const fetchOtpRequests = async () => {
-      const token = cookies.AUTH_TOKEN;
-      try {
-        const response = await AccessCode_index(token); 
-        if (response.ok) {
-          setRoomStatus(response.data);
-        } else {
-          toast.error(response.message ?? 'Failed to fetch OTP requests.');
-        }
-      } catch (error) {
-        console.error('Failed to fetch OTP requests', error);
-        toast.error('Failed to fetch OTP requests.');
-      }
-    };
-  
-    fetchOtpRequests();
-  }, [cookies]);*/
   const Sched_roomClose = () => {
     setSelectedRoom(null); 
     setSched_open(false); 
@@ -289,7 +267,7 @@ function DisplayRoom() {
                <Grid item xs={12} sm={6}>
                  <Select value={assignType} onChange={(e) => handleRequestTypeChange(e.target.value)} displayEmpty fullWidth sx={{ backgroundColor: '#ffffff',borderRadius: 1,}}>
                    <MenuItem value="" disabled><em>Select request type</em> </MenuItem>
-                   {accessRoomDialog?.name === 'R 404' ? (
+                   {accessRoomDialog?.name === 'R404' ? (
                        <MenuItem value="acess_code">Access Code Request</MenuItem>
                   
                    ) : (
@@ -299,19 +277,19 @@ function DisplayRoom() {
                  </Select>
                </Grid>
                <Grid item xs={12} sm={6}>
-                 <TextField fullWidth label="Assigned Date" type="date" value={assignedDate} onChange={(e) => setAssignedDate(e.target.value)} InputLabelProps={{shrink: true, sx: { color: '#374151' },}}sx={{ '& .MuiOutlinedInput-root': {backgroundColor: '#ffffff',borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151',}, }}/></Grid>
-               <Grid item xs={12} sm={6}>
-                 <TextField fullWidth label="Used At" type="time" value={usedAt} onChange={(e) => setUsedAt(e.target.value)} InputLabelProps={{ shrink: true, sx: { color: '#374151' },}}sx={{'& .MuiOutlinedInput-root': {backgroundColor: '#ffffff',borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151',},}}/></Grid>
-    
-               <Grid item xs={12} sm={6}>
-                 <TextField fullWidth label="End Time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} InputLabelProps={{ shrink: true, sx: { color: '#374151' },}}sx={{'& .MuiOutlinedInput-root': { backgroundColor: '#ffffff', borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151',},}}/>
-               </Grid>
-
-               <Grid item xs={12}>
-                 <TextField fullWidth label="Purpose" type="text" value={Purpose} onChange={(e) => setPurpose(e.target.value)} InputLabelProps={{shrink: true,sx: { color: '#374151' },}}sx={{'& .MuiOutlinedInput-root': { backgroundColor: '#ffffff', borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151', }, }}/></Grid>
+                 <TextField fullWidth label="Assigned Date" type="date" value={assignedDate} onChange={(e) => setAssignedDate(e.target.value)} InputLabelProps={{shrink: true, sx: { color: '#374151' },}}sx={{ '& .MuiOutlinedInput-root': {backgroundColor: '#ffffff',borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151',}, }} error={!!error?.generated_at}helperText={error?.generated_at?.[0]}/></Grid>
+                                <Grid item xs={12} sm={6}>
+                                  <TextField fullWidth label="Used At" type="time" value={usedAt} onChange={(e) => setUsedAt(e.target.value)} InputLabelProps={{ shrink: true, sx: { color: '#374151' },}}sx={{'& .MuiOutlinedInput-root': {backgroundColor: '#ffffff',borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151',},}} error={!!error?.used_at}helperText={error?.used_at?.[0]}/></Grid>
+                     
+                                <Grid item xs={12} sm={6}>
+                                  <TextField fullWidth label="End Time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} InputLabelProps={{ shrink: true, sx: { color: '#374151' },}}sx={{'& .MuiOutlinedInput-root': { backgroundColor: '#ffffff', borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151',},}} error={!!error?.end_time}helperText={error?.end_time?.[0]}/>
+                                </Grid>
+                 
+                                <Grid item xs={12}>
+                                  <TextField fullWidth label="Purpose" type="text" value={Purpose} onChange={(e) => setPurpose(e.target.value)} InputLabelProps={{shrink: true,sx: { color: '#374151' },}}sx={{'& .MuiOutlinedInput-root': { backgroundColor: '#ffffff', borderRadius: 1,},'& .MuiInputBase-input': {color: '#374151', }, }} error={!!error?.purpose}helperText={error?.purpose?.[0]}/></Grid>
           
                <Grid item xs={12} display="flex" justifyContent="flex-start" gap={2}>
-                 <Button sx={{ boxShadow: 1, textTransform: 'none', fontWeight: 'bold', background: '#D9D9D9', color: 'black', }}onClick={() => { setSelectedUser(null); setAssignType(''); setUsedAt(''); setEndTime(''); setAssignedDate(''); setPurpose(''); setAccessRoomDialog(null)}}> Cancel </Button>
+                 <Button sx={{ boxShadow: 1, textTransform: 'none', fontWeight: 'bold', background: '#D9D9D9', color: 'black', }}onClick={() => { setSelectedUser(null); setAssignType(''); setUsedAt(''); setEndTime(''); setAssignedDate(''); setPurpose(''); setErrors({});setAccessRoomDialog(null)}}> Cancel </Button>
                  <Button variant="contained" sx={{ boxShadow: 3, textTransform: 'none', fontWeight: 'bold', background: '#02318A',}} onClick={() => {
                      if (assignType === 'acess_code') {
                        handleOtpAssign();

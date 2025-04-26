@@ -105,10 +105,8 @@ function User() {
         setErrors({});
       } else {
         setErrors(response.errors || {});
-        toast.error(response.message ?? 'Failed to create user.');
       }
     } catch (error) {
-      console.error('Failed to create user', error);
       toast.error('Failed to create user.');
     }
   };
@@ -134,10 +132,8 @@ function User() {
         setErrors({});
       } else {
         setErrors(response.errors || {});
-        toast.error(response.message ?? 'Failed to update user.');
       }
     } catch (error) {
-      console.error('Failed to update user', error);
       toast.error('Failed to update user.');
     }
   };
@@ -172,6 +168,7 @@ function User() {
   const handleClose = () => {
     setOpen(false);
     setSelectedUser(null);
+
   };
   useEffect(() => {
     if (selectedUser) {
@@ -219,9 +216,8 @@ function User() {
           <Typography><span style={{ fontWeight: "bold" }}>First Name:</span> {user.profile.first_name}</Typography>
           <Typography><span style={{ fontWeight: "bold" }}>Middle Name:</span> {user.profile.middle_name}</Typography>
           <Typography><span style={{ fontWeight: "bold" }}>Last Name:</span> {user.profile.last_name}</Typography>
-          <Typography><span style={{ fontWeight: "bold" }}>Birth Date:</span> {user.profile.birth_date}</Typography>
           <Typography><span style={{ fontWeight: "bold" }}>Gender:</span> {user.profile.gender}</Typography>
-          <Typography><span style={{ fontWeight: "bold" }}>Contact:</span> {user.profile.contact_number}</Typography>
+          <Typography><span style={{ fontWeight: "bold" }}>Email:</span> {user.email}</Typography>
           <Typography><span style={{ fontWeight: "bold" }}>Department:</span> {user.profile.department}</Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: isSmallScreen ? 'wrap' : 'nowrap', gap: 1 }}>
             <Typography><span style={{ fontWeight: 'bold' }}>Action:</span></Typography>
@@ -240,9 +236,8 @@ function User() {
                 <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>First Name</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Middle Name</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Last Name</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Birth Date</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Gender</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Contact Number</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Email</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Department</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Action</TableCell>
               </TableRow>
@@ -254,9 +249,8 @@ function User() {
                   <TableCell align="center">{user.profile.first_name}</TableCell>
                   <TableCell align="center">{user.profile.middle_name}</TableCell>
                   <TableCell align="center">{user.profile.last_name}</TableCell>
-                  <TableCell align="center">{user.profile.birth_date}</TableCell>
                   <TableCell align="center">{user.profile.gender}</TableCell>
-                  <TableCell align="center">{user.profile.contact_number}</TableCell>
+                  <TableCell align="center">{user.email}</TableCell>
                   <TableCell align="center">{user.profile.department}</TableCell>
                   <TableCell align="center">
                     <Button variant="contained" color="primary" size="small" sx={{ marginRight: isSmallScreen ? 0 : 1, marginTop: isSmallScreen ? 1 : 0, background: '#E87E21' }} onClick={() => handleEditClick(user)}>Edit</Button>
@@ -279,7 +273,7 @@ function User() {
               </DialogActions>
         </Dialog>
 
-        <Dialog open={formOpen} onClose={() => setFormOpen(false)} maxWidth="lg" fullWidth>
+        <Dialog open={formOpen} onClose={() => {setFormOpen(false);setErrors({});}} maxWidth="lg" fullWidth>
   <DialogTitle sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
     {isEdit ? 'Edit User' : 'Create User'}
   </DialogTitle>
@@ -306,13 +300,19 @@ function User() {
       )}
 
       <Grid item xs={12}md={isEdit ? 3 : 4} >
-        <TextField label="First Name" fullWidth value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} error={!!errors.first_name} helperText={errors.first_name || ''} />
+        <TextField label="First Name" fullWidth value={formData.first_name}   onChange={(e) => {const value = e.target.value.replace(/[0-9]/g, "");
+      setFormData({ ...formData, first_name: value });
+    }} error={!!errors.first_name} helperText={errors.first_name || ''} />
       </Grid>
       <Grid item xs={12} md={isEdit ? 3 : 4} >
-        <TextField label="Middle Name" fullWidth value={formData.middle_name} onChange={(e) => setFormData({ ...formData, middle_name: e.target.value })} error={!!errors.middle_name} helperText={errors.middle_name || ''} />
+        <TextField label="Middle Name" fullWidth value={formData.middle_name}  onChange={(e) => {const value = e.target.value.replace(/[0-9]/g, ""); 
+      setFormData({ ...formData, middle_name: value });
+    }} error={!!errors.middle_name} helperText={errors.middle_name || ''} />
       </Grid>
       <Grid item xs={12} md={isEdit ? 3 : 4} >
-        <TextField label="Last Name" fullWidth value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} error={!!errors.last_name} helperText={errors.last_name || ''} />
+        <TextField label="Last Name" fullWidth value={formData.last_name} onChange={(e) => {const value = e.target.value.replace(/[0-9]/g, ""); 
+      setFormData({ ...formData, last_name: value });
+    }} error={!!errors.last_name} helperText={errors.last_name || ''} />
       </Grid>
               {isEdit && (
             <Grid item xs={12} md={3}>
@@ -325,12 +325,24 @@ function User() {
               </FormControl>
             </Grid>
         )}
+
+      {!isEdit && (
       <Grid item xs={12} md={4} lg={6}>
         <TextField label="Birth Date" type="date" fullWidth value={formData.birth_date} onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })} error={!!errors.birth_date} helperText={errors.birth_date || ''} InputLabelProps={{ shrink: true }} />
       </Grid>
+         )}
+
+    {!isEdit && (
       <Grid item xs={12} md={4} lg={6}>
-        <TextField label="Contact Number" fullWidth value={formData.contact_number} onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })} error={!!errors.contact_number} helperText={errors.contact_number || ''} />
+        <TextField label="Contact Number" fullWidth value={formData.contact_number} onChange={(e) => {const value = e.target.value.replace(/[^0-9]/g, ""); 
+        if (value.length <= 11) {
+          setFormData({ ...formData, contact_number: value });
+        }
+    }} error={!!errors.contact_number} helperText={errors.contact_number || ''} />
       </Grid>
+       )}
+
+    
       <Grid item xs={12} md={4} lg={6}>
             <FormControl fullWidth variant="outlined" error={!!errors.gender}>
                 <InputLabel>{errors.gender ? 'Gender (Required)' : 'Gender'}</InputLabel>
@@ -355,7 +367,7 @@ function User() {
     </Grid>
   </DialogContent>
       <DialogActions sx={{display: 'flex',justifyContent: 'left',ml: 2,gap:2}}>
-        <Button onClick={() => setFormOpen(false)} sx={{ background: '#D9D9D9', color: 'black' }}>Cancel</Button>
+        <Button onClick={() => {setFormOpen(false);setErrors({});}}sx={{ background: '#D9D9D9', color: 'black' }}>Cancel</Button>
         <Button onClick={isEdit ? handleUpdateUser : handleCreateUser} sx={{ background: '#1632A2', color: 'white' }}>{isEdit ? 'Update' : 'Save'}</Button>
       </DialogActions>
 </Dialog>

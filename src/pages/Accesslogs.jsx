@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import bgImg from '../../public/roomImages/Room1.png';
 import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, Card, Divider } from '@mui/material';
 import { index } from '../api/accesslogs';
 import { useCookies } from 'react-cookie';
@@ -19,26 +18,35 @@ export default function Accesslogs() {
       try {
         const response = await index(token);
         if (response.ok) {
-          setLogsdata(response.data);
+          // Map response data to include initial `status` and sort by ID descending
+          const updatedData = response.data
+            .map((log) => ({
+              ...log,
+              status: getStatus(log.accessed_at, log.used_at, log.end_time),
+            }))
+            .sort((a, b) => b.id - a.id); // Sort by ID descending
+          setLogsdata(updatedData);
         } else {
           toast.error(response.message ?? 'Failed to fetch schedules.');
         }
       } catch (error) {
-        console.error('Failed to fetch schedules', error);
         toast.error('Failed to fetch schedules.');
       }
     };
-
+  
     fetchData();
   }, [cookies]);
+  
+  
 
   const getStatus = (accessed_at, used_at, end_time) => {
     const now = new Date();
     const accessedDate = new Date(accessed_at);
-    const accessedDateStr = accessedDate.toISOString().split('T')[0];
-    const usedDateTime = new Date(`${accessedDateStr}T${used_at}:00`);
-    const endDateTime = new Date(`${accessedDateStr}T${end_time}:00`);
-
+    
+    // Ensure proper time parsing
+    const usedDateTime = new Date(accessedDate.toISOString().split('T')[0] + 'T' + used_at);
+    const endDateTime = new Date(accessedDate.toISOString().split('T')[0] + 'T' + end_time);
+  
     if (now >= usedDateTime && now <= endDateTime) {
       return "ONGOING";
     } else if (now > endDateTime) {
@@ -47,6 +55,22 @@ export default function Accesslogs() {
       return "UPCOMING";
     }
   };
+  
+
+  // Periodically update the statuses every 1 minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLogsdata((prevLogsdata) =>
+        prevLogsdata.map((log) => ({
+          ...log,
+          status: getStatus(log.accessed_at, log.used_at, log.end_time),
+        }))
+      );
+    }, 60000); // Update every 60 seconds
+  
+    return () => clearInterval(interval);
+  }, []);
+  
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -71,23 +95,20 @@ export default function Accesslogs() {
           {Logsdata.length === 0 ? (
             <Typography sx={{ textAlign: "center", padding: 2, fontSize: "16px", color: "#9e9e9e", }}>No schedules exist.</Typography>
           ) : (
-            Logsdata.map((row) => {
-              const status = getStatus(row.accessed_at, row.used_at, row.end_time);
-              return (
-                <Card key={row.id} variant="outlined" sx={{ marginBottom: 2, padding: 2, boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", borderRadius: 4 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#374151', marginBottom: 1 }}>Room ID: {row.room_id}</Typography>
-                  <Divider sx={{ marginBottom: 2 }} />
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Typography><b>User ID:</b> {row.user_id}</Typography>
-                    <Typography><b>Request ID:</b> {row.otp_request_id}</Typography>
-                    <Typography><b>Accessed At:</b> {new Date(row.accessed_at).toLocaleDateString("en-PH", { timeZone: "Asia/Manila" })}</Typography>
-                    <Typography><strong>Start Time:</strong>{new Date(`1970-01-01T${row.used_at}`).toLocaleString('en-PH', {hour: 'numeric',minute: 'numeric',hour12: true, })}</Typography>
-              <Typography><strong>End Time:</strong>{new Date(`1970-01-01T${row.end_time}`).toLocaleString('en-PH', {hour: 'numeric',minute: 'numeric',hour12: true, })}</Typography>
-                    <Typography><b>Status:</b> <span style={{ color: getStatusColor(status), fontWeight: "bold" }}>{status}</span></Typography>
-                  </Box>
-                </Card>
-              );
-            })
+            Logsdata.map((row) => (
+              <Card key={row.id} variant="outlined" sx={{ marginBottom: 2, padding: 2, boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", borderRadius: 4 }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#374151', marginBottom: 1 }}>Room ID: {row.room_id}</Typography>
+                <Divider sx={{ marginBottom: 2 }} />
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Typography><b>User ID:</b> {row.user_id}</Typography>
+                  <Typography><b>Request ID:</b> {row.otp_request_id}</Typography>
+                  <Typography><b>Accessed At:</b> {new Date(row.accessed_at).toLocaleDateString("en-PH", { timeZone: "Asia/Manila" })}</Typography>
+                  <Typography><strong>Start Time:</strong>{new Date(`1970-01-01T${row.used_at}`).toLocaleString('en-PH', {hour: 'numeric',minute: 'numeric',hour12: true, })}</Typography>
+                  <Typography><strong>End Time:</strong>{new Date(`1970-01-01T${row.end_time}`).toLocaleString('en-PH', {hour: 'numeric',minute: 'numeric',hour12: true, })}</Typography>
+                  <Typography><b>Status:</b> <span style={{ color: getStatusColor(row.status), fontWeight: "bold" }}>{row.status}</span></Typography>
+                </Box>
+              </Card>
+            ))
           )}
         </Box>
       ) : (
@@ -110,20 +131,17 @@ export default function Accesslogs() {
                   <TableCell colSpan={7} sx={{ textAlign: "center", height: "150px", fontSize: "16px" }}>No schedules exist.</TableCell>
                 </TableRow>
               ) : (
-                Logsdata.map((row) => {
-                  const status = getStatus(row.accessed_at, row.used_at, row.end_time);
-                  return (
-                    <TableRow key={row.id} sx={{ "&:last-child td, &:last-child th": { border: 0 }, "&:hover": { backgroundColor: "#f1f1f1" } }}>
-                      <TableCell align="center" component="th" scope="row">{row.room_id}</TableCell>
-                      <TableCell align="center">{row.user_id}</TableCell>
-                      <TableCell align="center">{row.otp_request_id}</TableCell>
-                      <TableCell align="center">{new Date(row.accessed_at).toLocaleDateString("en-PH", { timeZone: "Asia/Manila" })}</TableCell>
-                      <TableCell align="center">{new Date(`1970-01-01T${row.used_at}`).toLocaleString('en-PH', {hour: 'numeric',minute: 'numeric',hour12: true, })}</TableCell>
-                      <TableCell align="center">{new Date(`1970-01-01T${row.end_time}`).toLocaleString('en-PH', {hour: 'numeric',minute: 'numeric',hour12: true, })}</TableCell>
-                      <TableCell align="center" sx={{ color: getStatusColor(status), fontWeight: "bold" }}>{status}</TableCell>
-                    </TableRow>
-                  );
-                })
+                Logsdata.map((row) => (
+                  <TableRow key={row.id} sx={{ "&:last-child td, &:last-child th": { border: 0 }, "&:hover": { backgroundColor: "#f1f1f1" } }}>
+                    <TableCell align="center" component="th" scope="row">{row.room_id}</TableCell>
+                    <TableCell align="center">{row.user_id}</TableCell>
+                    <TableCell align="center">{row.otp_request_id}</TableCell>
+                    <TableCell align="center">{new Date(row.accessed_at).toLocaleDateString("en-PH", { timeZone: "Asia/Manila" })}</TableCell>
+                    <TableCell align="center">{new Date(`1970-01-01T${row.used_at}`).toLocaleString('en-PH', {hour: 'numeric',minute: 'numeric',hour12: true, })}</TableCell>
+                    <TableCell align="center">{new Date(`1970-01-01T${row.end_time}`).toLocaleString('en-PH', {hour: 'numeric',minute: 'numeric',hour12: true, })}</TableCell>
+                    <TableCell align="center" sx={{ color: getStatusColor(row.status), fontWeight: "bold" }}>{row.status}</TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>

@@ -10,7 +10,6 @@ import Button from '@mui/material/Button';
 import { store } from '../api/accesslogs';
 import { Typography, Table, Select,TableBody, TableCell, TableContainer,Dialog, DialogTitle,TableHead,DialogContent ,DialogActions,Grid,TextField, TableRow, Paper, Card, Divider, Modal, IconButton, Menu, MenuItem } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import Header from '../assets/images/HeaderUrs.png';
 import {update as Rooms_Update} from '../api/room';
 function Roomrequest() {
   const theme = useTheme();
@@ -24,6 +23,9 @@ function Roomrequest() {
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [errors,setErrors] = useState({});
+  
   
 
   useEffect(() => {
@@ -32,7 +34,8 @@ function Roomrequest() {
       try {
         const response = await index(token);
         if (response.ok) {
-          const filteredData = response.data.filter(request => request.Access_code != null);
+          const filteredData = response.data.filter(request => request.room?.name == "R404" || request.room?.name == "404")
+          .sort((a, b) => b.id - a.id); // Sort by ID descending (latest first)
           setRoomrequest(filteredData);
         } else {
           toast.error(response.message ?? 'Failed to fetch rooms.');
@@ -46,21 +49,15 @@ function Roomrequest() {
 
   const handleAccept = async (request) => {
     const token = cookies.AUTH_TOKEN;
-    const body = { otp_status: 1 };
-
-    console.log('Token:', token);
-    console.log('Accepting request with id:', request.id);
-    console.log('Request body:', body);
-
+    const body = { access_status: 1 };
     try {
       const response = await update(body, request.id, token);
-      console.log('API response:', response);
 
       if (response.ok) {
         toast.success('Request accepted successfully!');
         setRoomrequest((prevRequests) =>
           prevRequests.map((req) =>
-            req.id === request.id ? { ...req, otp_status: 'accepted' } : req
+            req.id === request.id ? { ...req, access_status: 1 } : req
           )
         );
 
@@ -79,76 +76,52 @@ function Roomrequest() {
           end_time: formatend_time,
 
         };
-        console.log(formatend_time)
-        console.log('Formatted used_at:', logData.used_at);
-        console.log('Formatted end_time:', logData.end_time);
 
         const logResponse = await store(logData, token);
-        console.log('Log Response:', logResponse);
+        const roomUpdateBody = new FormData();
+        roomUpdateBody.append("status", 2);
+        const roomUpdateResponse = await Rooms_Update(roomUpdateBody, request.room_id, cookies.AUTH_TOKEN);
 
-        if (logResponse.ok) {
-          console.log('Access log stored successfully!');
-        } else {
-          toast.error(logResponse.message || 'Failed to store access log.');
-        }
       } else {
         toast.error(response.message || 'Failed to accept the request.');
+        setErrors(response.message)
+        toast.error(response.message)
       }
-
-      const roomUpdateBody = { status: 2}; 
-      const roomUpdateResponse = await Rooms_Update(roomUpdateBody, request.room_id, token);
-    
-
-      if (roomUpdateResponse.ok) {
-        console.log("Room Status Updated");
-      } else {
-        console.error('Failed to update room status:', roomUpdateResponse);
-        toast.error(roomUpdateData?.message || 'Failed to update room status.');
-      }
-    } catch (error) {
-      console.error('Failed to accept the request:', error);
-      toast.error('Failed to accept the request.');
-    }
-  };
+          }catch (error) {
+            toast.error('Failed to accept the request.');
+          }
+        };
 
   const handleReject = async (id, currentStatus, request) => {
   
-    if (currentStatus === 'accepted' || currentStatus === 'rejected') {
+   /* if (currentStatus === 'accepted' || currentStatus === 'rejected') {
       toast.warning('This request has already been processed.');
       return;
-    }
+    }*/
   
     const token = cookies.AUTH_TOKEN;
-    const body = { otp_status: 3 };
+    const body = { access_status: 3 };
   
     try {
       // Update the OTP request status
       const response = await update(body, id, token);
-      console.log('API response:', response);
-  
       if (response.ok) {
         toast.success('Request rejected successfully!');
         setRoomrequest((prevRequests) =>
           prevRequests.map((req) =>
-            req.id === id ? { ...req, otp_status: 'rejected' } : req
+            req.id === id ? { ...req, access_status: 3 } : req
           )
         );
       } else {
         toast.error(response.message || 'Failed to reject the request.');
       }
   
-      // Update the room status
-      const roomUpdateBody = { status: 1 };
-      const roomUpdateResponse = await Rooms_Update(roomUpdateBody, request.room_id, token);
-  
-      if (roomUpdateResponse.ok) {
-        console.log('Room Status Updated');
-      } else {
-        console.error('Failed to update room status:', roomUpdateResponse);
-        toast.error(roomUpdateResponse?.message || 'Failed to update room status.');
-      }
+      // Update Room Status
+      const roomUpdateBody = new FormData();
+      roomUpdateBody.append("status", 1);
+
+      const roomUpdateResponse = await Rooms_Update(roomUpdateBody, request.room_id, cookies.AUTH_TOKEN);
     } catch (error) {
-      console.error('Failed to reject the request:', error?.message || error);
       toast.error(error?.message || 'An unexpected error occurred.');
     }
   };
@@ -224,22 +197,27 @@ function Roomrequest() {
   const renderActionCell = (request) => (
         <TableCell align="center">
           {isSmallScreen ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-              <Button onClick={() => handleAccept(request)} sx={{backgroundColor: '#16A22B',color: 'white'}}>Accept</Button>
-              <Button onClick={() => handleReject(request.id, request.otp_status,request)} sx={{backgroundColor: '#C41919',color: 'white'}}>Reject</Button>
-              <Button onClick={() => handleViewDetails(request)} sx={{backgroundColor: '#1632A2',color: 'white'}}>View Details</Button>
-              <Button onClick={() => handleOpenDeleteModal(request.id)} sx={{backgroundColor: '#1632A2',color: 'white'}}>Delete</Button>
-            </Box>
+            <>
+            <IconButton onClick={(event) => handleMenuClick(event, request)}>
+             <Typography>Select Action</Typography>
+            </IconButton>
+            <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl) && selectedRequest?.id === request.id} onClose={handleMenuClose}>
+                <MenuItem onClick={() => handleAccept(request)} disabled={request.access_status == 1 || request.access_status == 3} >Accept</MenuItem>
+                <MenuItem onClick={() => handleReject(request.id, request.access_status,request)} disabled={request.access_status == 1 || request.access_status == 3}>Reject</MenuItem>
+                <MenuItem onClick={() => handleOpenDeleteModal(request.id)}>Delete</MenuItem>
+                <MenuItem onClick={() => handleViewDetails(request)}>View Details</MenuItem>
+            </Menu>
+          </>
           ) : (
             <>
               <IconButton onClick={(event) => handleMenuClick(event, request)}>
                 <MoreVertIcon />
               </IconButton>
               <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl) && selectedRequest?.id === request.id} onClose={handleMenuClose}>
-                  <MenuItem onClick={() => handleAccept(request)} >Accept</MenuItem>
-                  <MenuItem onClick={() => handleReject(request.id, request.otp_status,request)}>Reject</MenuItem>
-                  <MenuItem onClick={() => handleViewDetails(request)}>View Letter</MenuItem>
+                  <MenuItem onClick={() => handleAccept(request)} disabled={request.access_status == 1 || request.access_status == 3}>Accept</MenuItem>
+                  <MenuItem onClick={() => handleReject(request.id, request.access_status,request)} disabled={request.access_status == 1 || request.access_status == 3}>Reject</MenuItem>
                   <MenuItem onClick={() => handleOpenDeleteModal(request.id)}>Delete</MenuItem>
+                  <MenuItem onClick={() => handleViewDetails(request)}>View Details</MenuItem>
               </Menu>
             </>
           )}
@@ -261,7 +239,8 @@ function Roomrequest() {
                   <Typography> <b>User Name:</b> {request.user?.username || 'N/A'}</Typography>
                   <Typography> <b>Access Code:</b> {request.Access_code || 'N/A'}</Typography>
                   <Typography><b>Purpose:</b> {request.purpose || 'No Purpose Provided'}</Typography>
-                  <Typography><b>Status:</b> {renderStatusCell(request.otp_status)} </Typography>
+                  <Typography><b>Access Code:</b> {request.Access_code || 'No Access Code Provided'}</Typography>
+                  <Typography><b>Status:</b> {renderStatusCell(request.access_status)} </Typography>
                   <Typography><b>Generated At:</b>{' '}{new Date(request.generated_at).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', })}</Typography>
                   <Typography><strong>Start Time:</strong>{new Date(`1970-01-01T${request.used_at}`).toLocaleString('en-PH', {hour: 'numeric',minute: 'numeric',hour12: true, })}</Typography>
                   <Typography><strong>Start Time:</strong>{new Date(`1970-01-01T${request.end_time}`).toLocaleString('en-PH', {hour: 'numeric',minute: 'numeric',hour12: true, })}</Typography>
@@ -282,6 +261,7 @@ function Roomrequest() {
                 <TableCell align="center">User ID</TableCell>
                 <TableCell align="center">User Name</TableCell>
                 <TableCell align="center">Purpose</TableCell>
+                <TableCell align="center">Access Code</TableCell>
                 <TableCell align="center">Status</TableCell>
                 <TableCell align="center">Generated At</TableCell>
                 <TableCell align="center">Used At</TableCell>
@@ -296,7 +276,8 @@ function Roomrequest() {
                   <TableCell align="center">{request.user_id}</TableCell>
                   <TableCell align="center">{request.user?.username}</TableCell>
                   <TableCell align="center">{request.purpose}</TableCell>
-                  <TableCell align="center">{renderStatusCell(request.otp_status)}</TableCell>
+                  <TableCell align="center">{request.Access_code}</TableCell>
+                  <TableCell align="center">{renderStatusCell(request.access_status)}</TableCell>
                   <TableCell align="center">{new Date(request.generated_at).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila',})}
                   </TableCell>
                   <TableCell align="center">{new Date(`1970-01-01T${request.used_at}`).toLocaleString('en-PH', {hour: 'numeric',minute: 'numeric',hour12: true, })}</TableCell>
@@ -314,6 +295,7 @@ function Roomrequest() {
              <DialogTitle sx={{ textAlign: "center", fontWeight: "bold" }}>Room Data </DialogTitle>
              <Box sx={{ px: 3, py: 2 }}>
               <Typography><strong>Request From:</strong> {selectedRoom?.user?.username || 'N/A'}</Typography>
+              <Typography><strong>Room Name:</strong> {selectedRoom?.room?.name || 'N/A'}</Typography>
               <Typography><strong>Assigned Date:</strong> {new Date(selectedRoom?.generated_at).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila' })}</Typography>
               <Typography><strong>Start Time:</strong>{new Date(`1970-01-01T${selectedRoom?.used_at}`).toLocaleString('en-PH', {hour: 'numeric',minute: 'numeric',hour12: true, })}</Typography>
               <Typography><strong>End Time:</strong>{new Date(`1970-01-01T${selectedRoom?.end_time}`).toLocaleString('en-PH', {hour: 'numeric',minute: 'numeric',hour12: true, })}</Typography>
@@ -324,7 +306,6 @@ function Roomrequest() {
               <Button sx={{ backgroundColor: "#1632A2", color: "white" }} onClick={handlePrint}>Print</Button>
           </DialogActions>
        </Dialog>
-
       </Modal>
 
       <Dialog open={openDeleteModal} onClose={() => setDeleteModal(false)}>
